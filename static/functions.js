@@ -97,6 +97,7 @@ function getCookie(name) {
 async function checkVer() {
 	let token = $('#token').val()
 	let aria2url = $('#url').val()
+	let auth = $('#auth').val()
 	if (token != "") {
 		postVer = JSON.stringify({
 			jsonrpc: '2.0',
@@ -112,10 +113,20 @@ async function checkVer() {
 			params: []
 		})
 	}
+	if (auth != "") {
+		headers = {
+			'Content-Type': 'text/json',
+			'Authorization': 'Basic ' + btoa(auth),
+		}
+	} else {
+		headers = {
+			'Content-Type': 'text/json',
+		}
+	}
 	const getVer = await fetch(aria2url, {
 		body: postVer,
 		method: 'POST',
-		headers: { 'content-type': 'text/json' }
+		headers: headers,
 	}).catch((error) => {
 		Swal.fire('Sorry~', '连接aria2失败', 'error')
 	});
@@ -130,6 +141,7 @@ async function checkVer() {
 async function addUri() {
 	let token = $('#token').val()
 	let aria2url = $('#url').val()
+	let auth = $('#auth').val()
 	// Thanks to acgotaku/BaiduExporter
 	const httpurl = $('#http')[0].href
 	const httpsurl = $('#https')[0].href
@@ -154,17 +166,27 @@ async function addUri() {
 		})
 		post = JSON.stringify({ jsonrpc: '2.0', id: 'baiduwp', method: 'aria2.addUri', params: [[httpurl, httpsurl], { header: headerOption }] })
 	}
+	if (auth != "") {
+		headers = {
+			'Content-Type': 'text/json',
+			'Authorization': 'Basic ' + btoa(auth),
+		}
+	} else {
+		headers = {
+			'Content-Type': 'text/json',
+		}
+	}
 	const getVer = await fetch(aria2url, {
 		body: postVer,
 		method: 'POST',
-		headers: { 'content-type': 'text/json' }
+		headers,
 	}).catch((error) => {
 		Swal.fire('Sorry~', '连接aria2失败', 'error')
 	});
 	if (getVer != null)
 		if (await getVer.status === 200) {
 			Swal.fire('detected aria2 version ' + JSON.parse(await getVer.text()).result.version, 'sending request...', 'success')
-			const sendLink = await fetch(aria2url, { body: post, method: 'POST', headers: { 'content-type': 'text/json' } }).catch((e) => { Swal.fire('Sorry~', e, 'error') })
+			const sendLink = await fetch(aria2url, { body: post, method: 'POST', headers, }).catch((e) => { Swal.fire('Sorry~', e, 'error') })
 			if (sendLink != null)
 				if (await sendLink.status === 200) {
 					Swal.fire('成功发送', 'Good Luck', 'success')

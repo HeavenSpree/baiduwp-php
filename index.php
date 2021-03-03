@@ -554,6 +554,12 @@ SWITCHTIP;
 															</p>
 														</div>
 														<div class="form-group">
+															<p><label class="control-label">HTTP Basic Auth 参数</label>
+																<input name="auth" id="auth" class="form-control" placeholder="形如 username:password 格式">
+															</p>
+														</div>
+													
+														<div class="form-group">
 															<p><label class="control-label">Token</label>
 																<input name="token" id="token" class="form-control" placeholder="If none keep empty">
 															</p>
