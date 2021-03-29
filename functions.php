@@ -12,7 +12,7 @@
  * @link https://space.bilibili.com/88197958
  *
  */
-$programVersion_Functions = '2.1.0';
+$programVersion_Functions = '2.1.4';
 if (!defined('init')) { // 直接访问处理程序
 	header('Content-Type: text/plain; charset=utf-8');
 	if (!file_exists('config.php')) {
@@ -158,18 +158,28 @@ function getSign(string $surl, $randsk)
 	);
 	// 如果不修改这里,则要修改配置文件ini
 	$result = get($url, $header);
-	if (preg_match('/yunData.setData\((\{.*?\})\);/', $result, $matches)) {
-		$result = json_decode($matches[1], true, 512, JSON_BIGINT_AS_STRING);
+
+	//有可能是账号被百度拉黑，导致获取到的页面不同 #83 #86
+	//百度全面拉黑 2021-03-18 19:40
+	//pd修复版及网页版失效
+	// if (DEBUG) {
+	// 	echo '<pre>getSign():no match</pre>';
+	// 	var_dump(htmlspecialchars($result));
+	// }
+	if (preg_match('/locals.mset\((\{.*?\})\);/', $result, $matches)) {
+		$result_decode = json_decode($matches[1], true, 512, JSON_BIGINT_AS_STRING);
 		if (DEBUG) {
-			echo '<pre>getSign():';
-			var_dump($result);
+			echo '<pre>【限制版】getSign():';
+			var_dump($result_decode);
 			echo '</pre>';
 		}
-		return $result;
+		return $result_decode;
 	} else {
 		if (DEBUG) {
-			echo '<pre>getSign():no match</pre>';
+			echo '<pre>【限制版】getSign():no match</pre>';
+			var_dump(htmlspecialchars($result));
 		}
+		dl_error("根目录yunData获取失败", "页面未正常加载，或者百度已经升级页面，无法正常获取根目录yunData数据。");
 		return 1;
 	}
 }
@@ -196,7 +206,7 @@ function GetDir(string $dir, string $randsk, string $shareid, string $uk)
 }
 function FileInfo(string $filename, float $size, string $md5, int $server_ctime)
 { // 输出 HTML 字符串
-	return '<p class="card-text">文件名：<b>' . $filename . '</b></p><p class="card-text">文件大小：<b>' . formatSize($size) . '</b></p><p class="card-text">文件MD5：<b>' . $md5
+	return '<p class="card-text"  id="filename" >文件名：<b>' . $filename . '</b></p><p class="card-text">文件大小：<b>' . formatSize($size) . '</b></p><p class="card-text">文件MD5：<b>' . $md5
 		. '</b></p><p class="card-text">上传时间：<b>' . date("Y年m月d日 H:i:s", $server_ctime) . '</b></p>';
 }
 function getDlink(string $fs_id, string $timestamp, string $sign, string $randsk, string $share_id, string $uk, string $bdstoken, bool $isnoualink, int $app_id = 250528)
@@ -268,11 +278,29 @@ function get_BDCLND($surl, $Pwd)
 		return $bdclnd;
 	} else {
 		if (DEBUG) {
-			echo '<pre>get_BDCLND():';
-			var_dump($header);
+			echo '<pre>【获取bdclnd失败，可能是不需要此参数】get_BDCLND():';
+			var_dump($result);
 			echo '</pre>';
 		}
-		return '';
+		echo '<script>Swal.fire("使用提示","检测到当前链接异常，保存到网盘重新分享后可获得更好的体验~","info");</script>';
+		// 尝试使用老方法获取
+		$header = head("https://pan.baidu.com/s/" . $surl, []);
+		$bdclnd = preg_match('/BDCLND=(.+?);/', $header, $matches);
+		if ($bdclnd) {
+			if (DEBUG) {
+				echo '<pre>【老版本方法】get_BDCLND():';
+				var_dump($matches[1]);
+				echo '</pre>';
+			}
+			return $matches[1];
+		} else {
+			if (DEBUG) {
+				echo '<pre>【老版本方法】get_BDCLND():';
+				var_dump($header);
+				echo '</pre>';
+			}
+			return '';
+		}
 	}
 }
 function connectdb(bool $isAPI = false)
@@ -305,7 +333,7 @@ function GetList(string $Shorturl, string $Dir, bool $IsRoot, string $Password)
 
 	$Root = ($IsRoot) ? "1" : "0";
 	$Dir = urlencode($Dir);
-	$Data = "shorturl=$Shorturl&dir=$Dir&root=$Root&pwd=$Password&page=1&num=2000&order=time";
+	$Data = "shorturl=$Shorturl&dir=$Dir&root=$Root&pwd=$Password&page=1&num=1000&order=time";
 	$header = array("User-Agent: netdisk", "Referer: https://pan.baidu.com/disk/home");
 	$result = json_decode(post($Url, $Data, $header), true);
 	if (DEBUG) {

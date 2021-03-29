@@ -3,7 +3,7 @@
  *
  * 许多函数来源于github，详见项目里的Thanks
  *
- * @version 1.4.5
+ * @version 2.1.3
  *
  * @author Yuan_Tuo <yuantuo666@gmail.com>
  * @link https://imwcr.cn/
@@ -142,6 +142,7 @@ async function addUri() {
 	let token = $('#token').val()
 	let aria2url = $('#url').val()
 	let auth = $('#auth').val()
+	let filename = $('#filename b').text();
 	// Thanks to acgotaku/BaiduExporter
 	const httpurl = $('#http')[0].href
 	const httpsurl = $('#https')[0].href
@@ -155,7 +156,7 @@ async function addUri() {
 			id: 'baiduwp',
 			params: ['token:' + token]
 		})
-		post = JSON.stringify({ jsonrpc: '2.0', id: 'baiduwp', method: 'aria2.addUri', params: ["token:" + token, [httpurl, httpsurl], { header: headerOption }] })
+		post = JSON.stringify({ jsonrpc: '2.0', id: 'baiduwp', method: 'aria2.addUri', params: ["token:" + token, [httpurl, httpsurl], { header: headerOption, out: filename }] })
 	}
 	else {
 		postVer = JSON.stringify({
@@ -164,7 +165,7 @@ async function addUri() {
 			id: 'baiduwp',
 			params: []
 		})
-		post = JSON.stringify({ jsonrpc: '2.0', id: 'baiduwp', method: 'aria2.addUri', params: [[httpurl, httpsurl], { header: headerOption }] })
+		post = JSON.stringify({ jsonrpc: '2.0', id: 'baiduwp', method: 'aria2.addUri', params: [[httpurl, httpsurl], { header: headerOption, out: filename }] })
 	}
 	if (auth != "") {
 		headers = {
